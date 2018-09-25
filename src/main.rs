@@ -1,12 +1,25 @@
 mod ffi;
-
-use self::ffi::*;
 use std::net::{IpAddr, Ipv4Addr};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Protocol {
     TCP,
     UDP,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum AddressFamily {
+    AF_INET,
+    AF_INET6,
+}
+
+impl AddressFamily {
+    pub fn as_ulong(&self) -> ffi::ULONG {
+        match *self {
+            AddressFamily::AF_INET => ffi::AF_INET,
+            AddressFamily::AF_INET6 => ffi::AF_INET6,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -19,7 +32,7 @@ pub struct BindingInfo {
 
 #[derive(Copy, Clone, Debug)]
 pub enum ErrorType {
-    InitializationError(u32),
+    BufferInitializationError(u32),
     ErrorWithCode(u32),
 }
 
@@ -29,41 +42,44 @@ pub struct Error {
     pub error_type: ErrorType,
 }
 
-fn get_extended_udp_table(bindings: &mut Vec<BindingInfo>) -> Result<(), Error> {
+fn get_extended_udp_table(
+    address_family: AddressFamily,
+    bindings: &mut Vec<BindingInfo>,
+) -> Result<(), Error> {
     unsafe {
-        let mut buffer_size: DWORD = 0;
-        let mut err_code = GetExtendedUdpTable(
+        let mut buffer_size: ffi::DWORD = 0;
+        let mut err_code = ffi::GetExtendedUdpTable(
             std::ptr::null_mut(),
             &mut buffer_size,
-            FALSE,
-            AF_INET,
-            UDP_TABLE_OWNER_PID,
+            ffi::FALSE,
+            address_family.as_ulong(),
+            ffi::UDP_TABLE_OWNER_PID,
             0,
         );
         let mut buffer = Vec::<u8>::new();
         let mut iterations = 0;
-        while err_code == ERROR_INSUFFICIENT_BUFFER {
+        while err_code == ffi::ERROR_INSUFFICIENT_BUFFER {
             buffer = Vec::<u8>::with_capacity(buffer_size as usize);
-            err_code = GetExtendedUdpTable(
-                buffer.as_mut_ptr() as PVOID,
+            err_code = ffi::GetExtendedUdpTable(
+                buffer.as_mut_ptr() as ffi::PVOID,
                 &mut buffer_size,
-                FALSE,
-                AF_INET,
-                UDP_TABLE_OWNER_PID,
+                ffi::FALSE,
+                address_family.as_ulong(),
+                ffi::UDP_TABLE_OWNER_PID,
                 0,
             );
             iterations += 1;
             if iterations > 100 {
                 return Result::Err(Error {
                     method_name: "GetExtendedUdpTable",
-                    error_type: ErrorType::InitializationError(iterations),
+                    error_type: ErrorType::BufferInitializationError(iterations),
                 });
             }
         }
-        if err_code == NO_ERROR {
-            let table_ref = &*(buffer.as_ptr() as *const MIB_UDPTABLE_OWNER_PID);
+        if err_code == ffi::NO_ERROR {
+            let table_ref = &*(buffer.as_ptr() as *const ffi::MIB_UDPTABLE_OWNER_PID);
             let rows_count = table_ref.rows_count as usize;
-            let row_ptr = &table_ref.rows[0] as *const MIB_UDPROW_OWNER_PID;
+            let row_ptr = &table_ref.rows[0] as *const ffi::MIB_UDPROW_OWNER_PID;
             for i in 0..rows_count {
                 let row = &*row_ptr.offset(i as isize);
                 bindings.push(BindingInfo {
@@ -85,7 +101,7 @@ fn get_extended_udp_table(bindings: &mut Vec<BindingInfo>) -> Result<(), Error> 
 
 fn main() {
     let mut bindings = Vec::<BindingInfo>::with_capacity(128);
-    get_extended_udp_table(&mut bindings).expect("Error!!!");
+    get_extended_udp_table(AddressFamily::AF_INET, &mut bindings).expect("Error!!!");
     for binding in bindings {
         println!(
             "ip = {}, port = {}, pid = {}",
