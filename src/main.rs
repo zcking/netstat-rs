@@ -30,8 +30,44 @@ pub struct TcpBindingInfo {
     pub remote_addr: IpAddr,
     pub remote_scope: Option<u32>,
     pub remote_port: u16,
-    pub state: u32,
+    pub state: TcpState,
     pub pid: u32,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum TcpState {
+    MIB_TCP_STATE_CLOSED,
+    MIB_TCP_STATE_LISTEN,
+    MIB_TCP_STATE_SYN_SENT,
+    MIB_TCP_STATE_SYN_RCVD,
+    MIB_TCP_STATE_ESTAB,
+    MIB_TCP_STATE_FIN_WAIT1,
+    MIB_TCP_STATE_FIN_WAIT2,
+    MIB_TCP_STATE_CLOSE_WAIT,
+    MIB_TCP_STATE_CLOSING,
+    MIB_TCP_STATE_LAST_ACK,
+    MIB_TCP_STATE_TIME_WAIT,
+    MIB_TCP_STATE_DELETE_TCB,
+}
+
+impl From<u32> for TcpState {
+    fn from(tcp_state: u32) -> TcpState {
+        match tcp_state {
+            ffi::MIB_TCP_STATE_CLOSED => TcpState::MIB_TCP_STATE_CLOSED,
+            ffi::MIB_TCP_STATE_LISTEN => TcpState::MIB_TCP_STATE_LISTEN,
+            ffi::MIB_TCP_STATE_SYN_SENT => TcpState::MIB_TCP_STATE_SYN_SENT,
+            ffi::MIB_TCP_STATE_SYN_RCVD => TcpState::MIB_TCP_STATE_SYN_RCVD,
+            ffi::MIB_TCP_STATE_ESTAB => TcpState::MIB_TCP_STATE_ESTAB,
+            ffi::MIB_TCP_STATE_FIN_WAIT1 => TcpState::MIB_TCP_STATE_FIN_WAIT1,
+            ffi::MIB_TCP_STATE_FIN_WAIT2 => TcpState::MIB_TCP_STATE_FIN_WAIT2,
+            ffi::MIB_TCP_STATE_CLOSE_WAIT => TcpState::MIB_TCP_STATE_CLOSE_WAIT,
+            ffi::MIB_TCP_STATE_CLOSING => TcpState::MIB_TCP_STATE_CLOSING,
+            ffi::MIB_TCP_STATE_LAST_ACK => TcpState::MIB_TCP_STATE_LAST_ACK,
+            ffi::MIB_TCP_STATE_TIME_WAIT => TcpState::MIB_TCP_STATE_TIME_WAIT,
+            ffi::MIB_TCP_STATE_DELETE_TCB => TcpState::MIB_TCP_STATE_DELETE_TCB,
+            _ => panic!("Unknown TcpState!"),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -110,7 +146,7 @@ fn get_extended_tcp_table(
                             remote_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.remote_addr))),
                             remote_scope: Option::None,
                             remote_port: u16::from_be(row.remote_port as u16),
-                            state: row.state,
+                            state: TcpState::from(row.state),
                             pid: row.owning_pid,
                         }));
                     }
@@ -128,7 +164,7 @@ fn get_extended_tcp_table(
                             remote_addr: IpAddr::V6(Ipv6Addr::from(row.remote_addr)),
                             remote_scope: Option::Some(row.remote_scope_id),
                             remote_port: u16::from_be(row.remote_port as u16),
-                            state: row.state,
+                            state: TcpState::from(row.state),
                             pid: row.owning_pid,
                         }));
                     }
@@ -228,7 +264,7 @@ fn main() {
     for binding in bindings {
         match binding {
             Binding::TcpBinding(binding) => println!(
-                "{}:{} -> {}:{}, state = {}, pid = {}",
+                "{}:{} -> {}:{}, state = {:?}, pid = {}",
                 binding.local_addr,
                 binding.local_port,
                 binding.remote_addr,
