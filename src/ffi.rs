@@ -8,6 +8,17 @@ pub type BOOL = std::os::raw::c_int;
 pub const TRUE: BOOL = 1;
 pub const FALSE: BOOL = 0;
 
+pub type TCP_TABLE_CLASS = DWORD;
+pub const TCP_TABLE_BASIC_LISTENER: TCP_TABLE_CLASS = 0;
+pub const TCP_TABLE_BASIC_CONNECTIONS: TCP_TABLE_CLASS = 1;
+pub const TCP_TABLE_BASIC_ALL: TCP_TABLE_CLASS = 2;
+pub const TCP_TABLE_OWNER_PID_LISTENER: TCP_TABLE_CLASS = 3;
+pub const TCP_TABLE_OWNER_PID_CONNECTIONS: TCP_TABLE_CLASS = 4;
+pub const TCP_TABLE_OWNER_PID_ALL: TCP_TABLE_CLASS = 5;
+pub const TCP_TABLE_OWNER_MODULE_LISTENER: TCP_TABLE_CLASS = 6;
+pub const TCP_TABLE_OWNER_MODULE_CONNECTIONS: TCP_TABLE_CLASS = 7;
+pub const TCP_TABLE_OWNER_MODULE_ALL: TCP_TABLE_CLASS = 8;
+
 pub type UDP_TABLE_CLASS = DWORD;
 pub const UDP_TABLE_BASIC: UDP_TABLE_CLASS = 0;
 pub const UDP_TABLE_OWNER_PID: UDP_TABLE_CLASS = 1;
@@ -38,6 +49,14 @@ pub struct MIB_UDPROW_OWNER_PID {
 
 #[link(name = "iphlpapi")]
 extern "system" {
+    pub fn GetExtendedTcpTable(
+        pTcpTable: PVOID,
+        pdwSize: PDWORD,
+        bOrder: BOOL,
+        ulAf: ULONG,
+        TableClass: TCP_TABLE_CLASS,
+        Reserved: ULONG,
+    ) -> DWORD;
     pub fn GetExtendedUdpTable(
         pUdpTable: PVOID,
         pdwSize: PDWORD,
