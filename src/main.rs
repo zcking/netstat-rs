@@ -26,6 +26,7 @@ impl AddressFamily {
 pub struct BindingInfo {
     pub protocol: Protocol,
     pub ip: IpAddr,
+    pub scope: Option<u32>,
     pub port: u16,
     pub pid: u32,
 }
@@ -88,6 +89,7 @@ fn get_extended_udp_table(
                         bindings.push(BindingInfo {
                             protocol: Protocol::UDP,
                             ip: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
+                            scope: Option::None,
                             port: u16::from_be(row.local_port as u16),
                             pid: row.owning_pid,
                         });
@@ -102,6 +104,7 @@ fn get_extended_udp_table(
                         bindings.push(BindingInfo {
                             protocol: Protocol::UDP,
                             ip: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
+                            scope: Option::Some(row.local_scope_id),
                             port: u16::from_be(row.local_port as u16),
                             pid: row.owning_pid,
                         });
@@ -123,8 +126,8 @@ fn main() {
     get_extended_udp_table(AddressFamily::AF_INET6, &mut bindings).expect("Error!!!");
     for binding in bindings {
         println!(
-            "ip = {}, port = {}, pid = {}",
-            binding.ip, binding.port, binding.pid
+            "ip = {}, scope = {:?}, port = {}, pid = {}",
+            binding.ip, binding.scope, binding.port, binding.pid
         );
     }
 }
