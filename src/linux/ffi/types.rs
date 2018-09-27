@@ -21,4 +21,11 @@ pub type ssize_t = isize;
 /*
  * From "sys/uio.h"
  */
+
 pub type caddr_t = *mut c_void;
+
+/*
+ * From "linux/socket.h"
+ */
+
+pub type __kernel_sa_family_t = c_ushort;

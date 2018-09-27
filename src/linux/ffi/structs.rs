@@ -40,8 +40,17 @@ pub struct nlmsghdr {
     pub pid: __u32,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct sockaddr_nl {
+    nl_family: __kernel_sa_family_t, /* AF_NETLINK	*/
+    nl_pad: c_ushort,                /* zero		*/
+    nl_pid: __u32,                   /* port ID	*/
+    nl_groups: __u32,                /* multicast groups mask */
+}
+
 /*
- * From "inet_diag.h"
+ * From "linux/inet_diag.h"
  */
 
 #[repr(C)]
