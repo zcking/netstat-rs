@@ -1,13 +1,25 @@
 use linux::ffi::types::*;
+use std;
 use std::os::raw::*;
 
 /*
  * From "sys/uio.h"
  */
 
+#[repr(C)]
+#[derive(Copy, Clone)]
 pub struct iovec {
-    iov_base: caddr_t,
-    iov_len: c_int,
+    pub base: caddr_t,
+    pub len: c_int,
+}
+
+impl Default for iovec {
+    fn default() -> iovec {
+        iovec {
+            base: std::ptr::null_mut(),
+            len: 0,
+        }
+    }
 }
 
 /*
@@ -17,13 +29,13 @@ pub struct iovec {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct msghdr {
-    msg_name: caddr_t,      /* optional address */
-    msg_namelen: c_uint,    /* size of address */
-    msg_iov: *const iovec,  /* scatter/gather array */
-    msg_iovlen: c_uint,     /* # elements in msg_iov */
-    msg_control: caddr_t,   /* ancillary data, see below */
-    msg_controllen: c_uint, /* ancillary data buffer len */
-    msg_flags: c_int,       /* flags on received message */
+    pub name: caddr_t,      /* optional address */
+    pub namelen: c_uint,    /* size of address */
+    pub iov: *const iovec,  /* scatter/gather array */
+    pub iovlen: c_uint,     /* # elements in iov */
+    pub control: caddr_t,   /* ancillary data, see below */
+    pub controllen: c_uint, /* ancillary data buffer len */
+    pub flags: c_int,       /* flags on received message */
 }
 
 /*
@@ -31,7 +43,7 @@ pub struct msghdr {
  */
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct nlmsghdr {
     pub len: __u32,
     pub type_: __u16,
@@ -41,12 +53,12 @@ pub struct nlmsghdr {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct sockaddr_nl {
-    nl_family: __kernel_sa_family_t, /* AF_NETLINK	*/
-    nl_pad: c_ushort,                /* zero		*/
-    nl_pid: __u32,                   /* port ID	*/
-    nl_groups: __u32,                /* multicast groups mask */
+    pub family: __kernel_sa_family_t, /* AF_NETLINK	*/
+    pub pad: c_ushort,                /* zero		*/
+    pub pid: __u32,                   /* port ID	*/
+    pub groups: __u32,                /* multicast groups mask */
 }
 
 /*
@@ -54,7 +66,7 @@ pub struct sockaddr_nl {
  */
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct inet_diag_sockid {
     pub sport: __be16,
     pub dport: __be16,
@@ -65,7 +77,7 @@ pub struct inet_diag_sockid {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct inet_diag_msg {
     pub family: __u8,
     pub state: __u8,
@@ -77,4 +89,16 @@ pub struct inet_diag_msg {
     pub wqueue: __u32,
     pub uid: __u32,
     pub inode: __u32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Default)]
+pub struct inet_diag_req {
+    pub family: __u8, /* Family of addresses. */
+    pub src_len: __u8,
+    pub dst_len: __u8,
+    pub ext: __u8, /* Query extended information */
+    pub id: inet_diag_sockid,
+    pub states: __u32, /* States to dump */
+    pub dbs: __u32,    /* Tables to dump (NI) */
 }
