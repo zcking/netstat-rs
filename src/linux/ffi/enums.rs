@@ -1,3 +1,4 @@
+use linux::ffi::types::*;
 use std::os::raw::*;
 
 /*
@@ -33,6 +34,12 @@ pub const NLM_F_ROOT: NLM_F_TYPE = 0x100; /* specify tree root */
 pub const NLM_F_MATCH: NLM_F_TYPE = 0x200; /* return all matching */
 pub const NLM_F_ATOMIC: NLM_F_TYPE = 0x400; /* atomic GET */
 pub const NLM_F_DUMP: NLM_F_TYPE = (NLM_F_ROOT | NLM_F_MATCH);
+
+pub type NLMSG_TYPE = __u16;
+pub const NLMSG_NOOP: NLMSG_TYPE = 0x1; /* Nothing.		*/
+pub const NLMSG_ERROR: NLMSG_TYPE = 0x2; /* Error		*/
+pub const NLMSG_DONE: NLMSG_TYPE = 0x3; /* End of a dump	*/
+pub const NLMSG_OVERRUN: NLMSG_TYPE = 0x4; /* Data lost		*/
 
 /*
  * From "linux/inet_diag.h"
