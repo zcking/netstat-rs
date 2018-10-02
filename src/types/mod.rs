@@ -1,13 +1,13 @@
 mod address_family;
-mod binding;
 mod error;
-mod tcp_binding_info;
+mod socket_info;
+mod tcp_socket_info;
 mod tcp_state;
-mod udp_binding_info;
+mod udp_socket_info;
 
 pub use self::address_family::AddressFamily;
-pub use self::binding::Binding;
 pub use self::error::{Error, ErrorDetails};
-pub use self::tcp_binding_info::TcpBindingInfo;
+pub use self::socket_info::SocketInfo;
+pub use self::tcp_socket_info::TcpSocketInfo;
 pub use self::tcp_state::TcpState;
-pub use self::udp_binding_info::UdpBindingInfo;
+pub use self::udp_socket_info::UdpSocketInfo;

@@ -2,7 +2,7 @@ use std::net::IpAddr;
 use types::TcpState;
 
 #[derive(Copy, Clone, Debug)]
-pub struct TcpBindingInfo {
+pub struct TcpSocketInfo {
     pub local_addr: IpAddr,
     pub local_scope: Option<u32>,
     pub local_port: u16,

@@ -5,7 +5,7 @@ use windows::ffi;
 
 pub fn get_extended_tcp_table(
     address_family: AddressFamily,
-    bindings: &mut Vec<Binding>,
+    bindings: &mut Vec<SocketInfo>,
 ) -> Result<(), Error> {
     unsafe {
         let af_ulong = address_family.into();
@@ -46,7 +46,7 @@ pub fn get_extended_tcp_table(
                     let row_ptr = &table_ref.rows[0] as *const ffi::MIB_TCPROW_OWNER_PID;
                     for i in 0..rows_count {
                         let row = &*row_ptr.offset(i as isize);
-                        bindings.push(Binding::TcpBinding(TcpBindingInfo {
+                        bindings.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
                             local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
                             local_scope: Option::None,
                             local_port: u16::from_be(row.local_port as u16),
@@ -64,7 +64,7 @@ pub fn get_extended_tcp_table(
                     let row_ptr = &table_ref.rows[0] as *const ffi::MIB_TCP6ROW_OWNER_PID;
                     for i in 0..rows_count {
                         let row = &*row_ptr.offset(i as isize);
-                        bindings.push(Binding::TcpBinding(TcpBindingInfo {
+                        bindings.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
                             local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
                             local_scope: Option::Some(row.local_scope_id),
                             local_port: u16::from_be(row.local_port as u16),
