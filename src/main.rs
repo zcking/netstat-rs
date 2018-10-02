@@ -1,3 +1,4 @@
+extern crate libc;
 // #[cfg(target_os = "linux")]
 mod linux;
 mod types;
@@ -10,7 +11,7 @@ use windows::{get_extended_tcp_table, get_extended_udp_table};
 
 fn main() {
     unsafe {
-        linux::netlink();
+        linux::get_socket_info();
     }
     // let mut bindings = Vec::<Binding>::with_capacity(128);
     // get_extended_tcp_table(AddressFamily::AF_INET, &mut bindings).expect("Error!!!");
