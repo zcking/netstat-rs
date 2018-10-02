@@ -1,13 +1,15 @@
 extern crate libc;
-// #[cfg(target_os = "linux")]
+
+#[cfg(target_os = "linux")]
 mod linux;
-mod types;
 #[cfg(target_os = "windows")]
 mod windows;
 
+mod types;
 use types::*;
-#[cfg(target_os = "windows")]
-use windows::{get_extended_tcp_table, get_extended_udp_table};
+
+// #[cfg(target_os = "windows")]
+// use windows::{get_extended_tcp_table, get_extended_udp_table};
 
 fn main() {
     unsafe {
