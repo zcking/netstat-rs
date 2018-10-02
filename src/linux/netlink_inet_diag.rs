@@ -3,43 +3,48 @@ use linux::ffi::*;
 use std;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use types::*;
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
 
-pub fn get_socket_info() {
+pub fn get_socket_info() -> Result<(), Error> {
     unsafe {
         println!("AF_INET, IPPROTO_TCP:");
-        get_socket_info_fp(AF_INET as u8, IPPROTO_TCP as u8);
+        get_socket_info_fp(AF_INET as u8, IPPROTO_TCP as u8)?;
         println!();
         println!("AF_INET6, IPPROTO_TCP:");
-        get_socket_info_fp(AF_INET6 as u8, IPPROTO_TCP as u8);
+        get_socket_info_fp(AF_INET6 as u8, IPPROTO_TCP as u8)?;
         println!();
         println!("AF_INET, IPPROTO_UDP:");
-        get_socket_info_fp(AF_INET as u8, IPPROTO_UDP as u8);
+        get_socket_info_fp(AF_INET as u8, IPPROTO_UDP as u8)?;
         println!();
         println!("AF_INET6, IPPROTO_UDP:");
-        get_socket_info_fp(AF_INET6 as u8, IPPROTO_UDP as u8);
+        get_socket_info_fp(AF_INET6 as u8, IPPROTO_UDP as u8)?;
+        Result::Ok(())
     }
 }
 
-unsafe fn get_socket_info_fp(family: __u8, protocol: __u8) {
+unsafe fn get_socket_info_fp(family: __u8, protocol: __u8) -> Result<(), Error> {
     let mut recv_buf = [0u8; SOCKET_BUFFER_SIZE as usize];
     let nl_sock = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
-    send_diag_msg(nl_sock, family, protocol);
+    send_diag_msg(nl_sock, family, protocol)?;
     let buf_ptr = &mut recv_buf[0] as *mut u8 as *mut c_void;
     loop {
         let mut numbytes = recv(nl_sock, buf_ptr, SOCKET_BUFFER_SIZE, 0);
         let mut nlh = buf_ptr as *const u8 as *const nlmsghdr;
         while NLMSG_OK!(nlh, numbytes) {
             if (&*nlh).nlmsg_type == NLMSG_DONE as u16 {
-                close(nl_sock);
-                return;
+                return try_close(nl_sock);
             }
             if (&*nlh).nlmsg_type == NLMSG_ERROR as u16 {
-                close(nl_sock);
-                println!("Error in netlink message\n");
-                return;
+                try_close(nl_sock);
+                // todo: parse error code properly
+                // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
+                return Result::Err(Error {
+                    method_name: "NLMSG_NEXT",
+                    error_details: ErrorDetails::ErrorWithCode(0),
+                });
             }
             let diag_msg = NLMSG_DATA!(nlh) as *const inet_diag_msg;
             let rtalen = (&*nlh).nlmsg_len - NLMSG_LENGTH!(size_of::<inet_diag_msg>()) as __u32;
@@ -69,7 +74,7 @@ unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, rtalen: c_int) {
     println!("{}:{} -> {}:{}", src_ip, src_port, dst_ip, dst_port);
 }
 
-unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> isize {
+unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(), Error> {
     let mut sa: sockaddr_nl = std::mem::uninitialized();
     sa.nl_family = AF_NETLINK as sa_family_t;
     sa.nl_pid = 0;
@@ -108,12 +113,30 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> isize {
         msg_controllen: 0,
         msg_flags: 0,
     };
-    let retval = sendmsg(sockfd, &msg, 0);
-    if retval == -1 {
-        println!(
-            "error = {:?}",
-            std::io::Error::last_os_error().raw_os_error()
-        );
+    match sendmsg(sockfd, &msg, 0) {
+        -1 => Result::Err(Error {
+            method_name: "sendmsg",
+            error_details: get_os_error_details(),
+        }),
+        _ => Result::Ok(()),
     }
-    retval
+}
+
+unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
+    match close(sockfd) {
+        -1 => Result::Err(Error {
+            method_name: "close",
+            error_details: get_os_error_details(),
+        }),
+        _ => Result::Ok(()),
+    }
+}
+
+fn get_os_error_details() -> ErrorDetails {
+    ErrorDetails::ErrorWithCode(
+        std::io::Error::last_os_error()
+            .raw_os_error()
+            .map(|x| x as u32)
+            .unwrap_or(0),
+    )
 }

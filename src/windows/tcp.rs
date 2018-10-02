@@ -34,7 +34,7 @@ pub fn get_extended_tcp_table(
             if iterations > 100 {
                 return Result::Err(Error {
                     method_name: "GetExtendedTcpTable",
-                    error_type: ErrorType::BufferInitializationError(iterations),
+                    error_details: ErrorDetails::BufferInitializationError(iterations),
                 });
             }
         }
@@ -81,7 +81,7 @@ pub fn get_extended_tcp_table(
         } else {
             return Result::Err(Error {
                 method_name: "GetExtendedTcpTable",
-                error_type: ErrorType::ErrorWithCode(err_code),
+                error_details: ErrorDetails::ErrorWithCode(err_code),
             });
         }
     }
