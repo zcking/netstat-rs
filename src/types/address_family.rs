@@ -1,5 +1,6 @@
-#[derive(Copy, Clone, Debug)]
-pub enum AddressFamily {
-    AF_INET,
-    AF_INET6,
+bitflags! {
+    pub struct AddressFamily: u8 {
+        const Ipv4 = 0b00000001;
+        const Ipv6 = 0b00000010;
+    }
 }

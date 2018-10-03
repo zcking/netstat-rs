@@ -8,24 +8,11 @@ use types::*;
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
 
-pub fn get_socket_info() -> Result<(), Error> {
-    unsafe {
-        println!("AF_INET, IPPROTO_TCP:");
-        get_socket_info_fp(AF_INET as u8, IPPROTO_TCP as u8)?;
-        println!();
-        println!("AF_INET6, IPPROTO_TCP:");
-        get_socket_info_fp(AF_INET6 as u8, IPPROTO_TCP as u8)?;
-        println!();
-        println!("AF_INET, IPPROTO_UDP:");
-        get_socket_info_fp(AF_INET as u8, IPPROTO_UDP as u8)?;
-        println!();
-        println!("AF_INET6, IPPROTO_UDP:");
-        get_socket_info_fp(AF_INET6 as u8, IPPROTO_UDP as u8)?;
-        Result::Ok(())
-    }
-}
-
-unsafe fn get_socket_info_fp(family: __u8, protocol: __u8) -> Result<(), Error> {
+pub unsafe fn collect_sockets_info(
+    family: __u8,
+    protocol: __u8,
+    results: &mut Vec<SocketInfo>,
+) -> Result<(), Error> {
     let mut recv_buf = [0u8; SOCKET_BUFFER_SIZE as usize];
     let nl_sock = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
     send_diag_msg(nl_sock, family, protocol)?;
@@ -39,7 +26,7 @@ unsafe fn get_socket_info_fp(family: __u8, protocol: __u8) -> Result<(), Error> 
             }
             if (&*nlh).nlmsg_type == NLMSG_ERROR as u16 {
                 try_close(nl_sock);
-                // todo: parse error code properly
+                // TODO: parse error code from msg properly
                 // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
                 return Result::Err(Error {
                     method_name: "NLMSG_NEXT",
@@ -48,7 +35,7 @@ unsafe fn get_socket_info_fp(family: __u8, protocol: __u8) -> Result<(), Error> 
             }
             let diag_msg = NLMSG_DATA!(nlh) as *const inet_diag_msg;
             let rtalen = (&*nlh).nlmsg_len - NLMSG_LENGTH!(size_of::<inet_diag_msg>()) as __u32;
-            parse_diag_msg(&*diag_msg, rtalen as c_int);
+            parse_diag_msg(&*diag_msg, protocol, rtalen as c_int, results);
             nlh = NLMSG_NEXT!(nlh, numbytes);
         }
     }
@@ -66,12 +53,35 @@ unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> IpAddr {
     }
 }
 
-unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, rtalen: c_int) {
+unsafe fn parse_diag_msg(
+    diag_msg: &inet_diag_msg,
+    protocol: __u8,
+    rtalen: c_int,
+    results: &mut Vec<SocketInfo>,
+) {
     let src_port = u16::from_be(diag_msg.id.sport);
     let dst_port = u16::from_be(diag_msg.id.dport);
     let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
     let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
-    println!("{}:{} -> {}:{}", src_ip, src_port, dst_ip, dst_port);
+    match protocol as i32 {
+        IPPROTO_TCP => results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
+            local_addr: src_ip,
+            local_scope: Option::None,
+            local_port: src_port,
+            remote_addr: dst_ip,
+            remote_scope: Option::None,
+            remote_port: dst_port,
+            state: TcpState::MIB_TCP_STATE_LISTEN,
+            pid: 0,
+        })),
+        IPPROTO_UDP => results.push(SocketInfo::UdpSocketInfo(UdpSocketInfo {
+            local_addr: src_ip,
+            local_scope: Option::None,
+            local_port: src_port,
+            pid: 0,
+        })),
+        _ => panic!("Unknown protocol!"),
+    }
 }
 
 unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(), Error> {

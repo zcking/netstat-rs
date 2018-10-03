@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate bitflags;
 extern crate libc;
 
 #[cfg(target_os = "linux")]
@@ -8,29 +10,25 @@ mod windows;
 mod types;
 use types::*;
 
-// #[cfg(target_os = "windows")]
-// use windows::{get_extended_tcp_table, get_extended_udp_table};
+#[cfg(target_os = "linux")]
+use linux::*;
+#[cfg(target_os = "windows")]
+use windows::*;
 
 fn main() {
-    unsafe {
-        linux::get_socket_info();
+    let sockets_info = get_sockets_info(
+        AddressFamily::Ipv4 | AddressFamily::Ipv6,
+        Protocol::TCP | Protocol::UDP,
+    ).unwrap();
+    for socket_info in sockets_info {
+        match socket_info {
+            SocketInfo::TcpSocketInfo(i) => println!(
+                "TCP {}:{} -> {}:{} [{}]",
+                i.local_addr, i.local_port, i.remote_addr, i.remote_port, i.pid
+            ),
+            SocketInfo::UdpSocketInfo(i) => {
+                println!("UDP {}:{} -> *:* [{}]", i.local_addr, i.local_port, i.pid)
+            }
+        }
     }
-    // let mut bindings = Vec::<SocketInfo>::with_capacity(128);
-    // get_extended_tcp_table(AddressFamily::AF_INET, &mut bindings).expect("Error!!!");
-    // get_extended_tcp_table(AddressFamily::AF_INET6, &mut bindings).expect("Error!!!");
-    // get_extended_udp_table(AddressFamily::AF_INET, &mut bindings).expect("Error!!!");
-    // for binding in bindings {
-    //     match binding {
-    //         SocketInfo::TcpSocketInfo(binding) => println!(
-    //             "{}:{} -> {}:{}, state = {:?}, pid = {}",
-    //             binding.local_addr,
-    //             binding.local_port,
-    //             binding.remote_addr,
-    //             binding.remote_port,
-    //             binding.state,
-    //             binding.pid
-    //         ),
-    //         _ => {}
-    //     }
-    // }
 }

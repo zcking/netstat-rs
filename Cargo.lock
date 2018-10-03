@@ -1,4 +1,9 @@
 [[package]]
+name = "bitflags"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "libc"
 version = "0.2.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7,8 +12,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "netstat"
 version = "0.1.0"
 dependencies = [
+ "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [metadata]
+"checksum bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "228047a76f468627ca71776ecdebd732a3423081fcf5125585bcd7c49886ce12"
 "checksum libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)" = "76e3a3ef172f1a0b9a9ff0dd1491ae5e6c948b94479a3021819ba7d860c8645d"
