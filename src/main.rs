@@ -4,16 +4,22 @@ extern crate libc;
 
 #[cfg(target_os = "linux")]
 mod linux;
+#[cfg(target_os = "macos")]
+mod osx;
 #[cfg(target_os = "windows")]
 mod windows;
 
 mod types;
-use types::*;
+mod utils;
 
 #[cfg(target_os = "linux")]
 use linux::*;
+#[cfg(target_os = "macos")]
+use osx::*;
 #[cfg(target_os = "windows")]
 use windows::*;
+
+use types::*;
 
 fn main() {
     let sockets_info = get_sockets_info(

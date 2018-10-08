@@ -4,6 +4,7 @@ use std;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use types::*;
+use utils::*;
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
@@ -140,13 +141,4 @@ unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
         }),
         _ => Result::Ok(()),
     }
-}
-
-fn get_os_error_details() -> ErrorDetails {
-    ErrorDetails::ErrorWithCode(
-        std::io::Error::last_os_error()
-            .raw_os_error()
-            .map(|x| x as u32)
-            .unwrap_or(0),
-    )
 }
