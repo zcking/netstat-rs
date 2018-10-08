@@ -46,10 +46,8 @@ pub unsafe fn collect_tcp_sockets_info(
                     let row = &*row_ptr.offset(i as isize);
                     results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
                         local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
-                        local_scope: Option::None,
                         local_port: u16::from_be(row.local_port as u16),
                         remote_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.remote_addr))),
-                        remote_scope: Option::None,
                         remote_port: u16::from_be(row.remote_port as u16),
                         state: TcpState::from(row.state),
                         pid: row.owning_pid,
@@ -64,10 +62,10 @@ pub unsafe fn collect_tcp_sockets_info(
                     let row = &*row_ptr.offset(i as isize);
                     results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
                         local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
-                        local_scope: Option::Some(row.local_scope_id),
+                        // local_scope: Option::Some(row.local_scope_id),
                         local_port: u16::from_be(row.local_port as u16),
                         remote_addr: IpAddr::V6(Ipv6Addr::from(row.remote_addr)),
-                        remote_scope: Option::Some(row.remote_scope_id),
+                        // remote_scope: Option::Some(row.remote_scope_id),
                         remote_port: u16::from_be(row.remote_port as u16),
                         state: TcpState::from(row.state),
                         pid: row.owning_pid,
