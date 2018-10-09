@@ -37,23 +37,11 @@ pub fn get_sockets_info(
 fn attach_pids(sockets_info: &mut Vec<SocketInfo>) {
     let mut pids_by_inode = build_hash_of_pids_by_inode();
     for socket_info in sockets_info.iter_mut() {
-        match socket_info {
-            SocketInfo::TcpSocketInfo(tcpi) => {
-                tcpi.pids = pids_by_inode
-                    .remove(&tcpi.inode)
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|x| *x)
-                    .collect();
-            }
-            SocketInfo::UdpSocketInfo(udpi) => {
-                udpi.pids = pids_by_inode
-                    .remove(&udpi.inode)
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|x| *x)
-                    .collect();
-            }
-        }
+        socket_info.pids = pids_by_inode
+            .remove(&socket_info.inode)
+            .unwrap_or_default()
+            .iter()
+            .map(|x| *x)
+            .collect();
     }
 }

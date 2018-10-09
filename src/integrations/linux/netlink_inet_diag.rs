@@ -65,21 +65,25 @@ unsafe fn parse_diag_msg(
     let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
     let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
     match protocol as i32 {
-        IPPROTO_TCP => results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
-            local_addr: src_ip,
-            local_port: src_port,
-            remote_addr: dst_ip,
-            remote_port: dst_port,
-            state: TcpState::MIB_TCP_STATE_LISTEN,
+        IPPROTO_TCP => results.push(SocketInfo {
+            protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                local_addr: src_ip,
+                local_port: src_port,
+                remote_addr: dst_ip,
+                remote_port: dst_port,
+                state: TcpState::MIB_TCP_STATE_LISTEN,
+            }),
             pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
-        })),
-        IPPROTO_UDP => results.push(SocketInfo::UdpSocketInfo(UdpSocketInfo {
-            local_addr: src_ip,
-            local_port: src_port,
+        }),
+        IPPROTO_UDP => results.push(SocketInfo {
+            protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
+                local_addr: src_ip,
+                local_port: src_port,
+            }),
             pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
-        })),
+        }),
         _ => panic!("Unknown protocol!"),
     }
 }

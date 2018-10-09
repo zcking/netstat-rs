@@ -44,14 +44,16 @@ pub unsafe fn collect_tcp_sockets_info(
                 let row_ptr = &table_ref.rows[0] as *const MIB_TCPROW_OWNER_PID;
                 for i in 0..rows_count {
                     let row = &*row_ptr.offset(i as isize);
-                    results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
-                        local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
-                        local_port: u16::from_be(row.local_port as u16),
-                        remote_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.remote_addr))),
-                        remote_port: u16::from_be(row.remote_port as u16),
-                        state: TcpState::from(row.state),
+                    results.push(SocketInfo {
+                        protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                            local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
+                            local_port: u16::from_be(row.local_port as u16),
+                            remote_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.remote_addr))),
+                            remote_port: u16::from_be(row.remote_port as u16),
+                            state: TcpState::from(row.state),
+                        }),
                         pids: vec![row.owning_pid],
-                    }));
+                    });
                 }
             }
             AF_INET6 => {
@@ -60,16 +62,18 @@ pub unsafe fn collect_tcp_sockets_info(
                 let row_ptr = &table_ref.rows[0] as *const MIB_TCP6ROW_OWNER_PID;
                 for i in 0..rows_count {
                     let row = &*row_ptr.offset(i as isize);
-                    results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
-                        local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
-                        // local_scope: Option::Some(row.local_scope_id),
-                        local_port: u16::from_be(row.local_port as u16),
-                        remote_addr: IpAddr::V6(Ipv6Addr::from(row.remote_addr)),
-                        // remote_scope: Option::Some(row.remote_scope_id),
-                        remote_port: u16::from_be(row.remote_port as u16),
-                        state: TcpState::from(row.state),
+                    results.push(SocketInfo {
+                        protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                            local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
+                            // local_scope: Option::Some(row.local_scope_id),
+                            local_port: u16::from_be(row.local_port as u16),
+                            remote_addr: IpAddr::V6(Ipv6Addr::from(row.remote_addr)),
+                            // remote_scope: Option::Some(row.remote_scope_id),
+                            remote_port: u16::from_be(row.remote_port as u16),
+                            state: TcpState::from(row.state),
+                        }),
                         pids: vec![row.owning_pid],
-                    }));
+                    });
                 }
             }
             _ => panic!("Unknown address family!"),

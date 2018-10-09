@@ -14,15 +14,15 @@ fn main() {
         AddressFamily::Ipv4 | AddressFamily::Ipv6,
         Protocol::TCP | Protocol::UDP,
     ).unwrap();
-    for socket_info in sockets_info {
-        match socket_info {
-            SocketInfo::TcpSocketInfo(i) => println!(
+    for si in sockets_info {
+        match si.protocol_socket_info {
+            ProtocolSocketInfo::Tcp(pi) => println!(
                 "TCP {}:{} -> {}:{} [{:?}]",
-                i.local_addr, i.local_port, i.remote_addr, i.remote_port, i.pids
+                pi.local_addr, pi.local_port, pi.remote_addr, pi.remote_port, si.pids
             ),
-            SocketInfo::UdpSocketInfo(i) => println!(
+            ProtocolSocketInfo::Udp(i) => println!(
                 "UDP {}:{} -> *:* [{:?}]",
-                i.local_addr, i.local_port, i.pids
+                i.local_addr, i.local_port, si.pids
             ),
         }
     }

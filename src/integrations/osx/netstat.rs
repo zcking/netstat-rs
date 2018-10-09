@@ -44,20 +44,24 @@ pub fn get_netstat_info(
             _ => panic!("Unknown netstat output format!"),
         };
         if is_tcp {
-            results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
-                local_addr: parse_ip(local_addr, is_ipv4)?,
-                local_port: parse_port(local_port)?,
-                remote_addr: parse_ip(remote_addr, is_ipv4)?,
-                remote_port: parse_port(remote_port)?,
-                state: TcpState::MIB_TCP_STATE_CLOSED,
-                pid: pid.parse::<u32>().map_err(wrap_error)?,
-            }));
+            results.push(SocketInfo {
+                protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                    local_addr: parse_ip(local_addr, is_ipv4)?,
+                    local_port: parse_port(local_port)?,
+                    remote_addr: parse_ip(remote_addr, is_ipv4)?,
+                    remote_port: parse_port(remote_port)?,
+                    state: TcpState::MIB_TCP_STATE_CLOSED,
+                }),
+                pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+            });
         } else if is_udp {
-            results.push(SocketInfo::UdpSocketInfo(UdpSocketInfo {
-                local_addr: parse_ip(local_addr, is_ipv4)?,
-                local_port: parse_port(local_port)?,
-                pid: pid.parse::<u32>().map_err(wrap_error)?,
-            }));
+            results.push(SocketInfo {
+                protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
+                    local_addr: parse_ip(local_addr, is_ipv4)?,
+                    local_port: parse_port(local_port)?,
+                }),
+                pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+            });
         }
     }
     Result::Ok(results)
