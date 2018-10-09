@@ -4,5 +4,6 @@ mod ffi;
 mod netlink_inet_diag;
 
 mod api;
+mod procfs;
 
 pub use self::api::*;

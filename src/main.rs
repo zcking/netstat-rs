@@ -17,11 +17,11 @@ fn main() {
     for socket_info in sockets_info {
         match socket_info {
             SocketInfo::TcpSocketInfo(i) => println!(
-                "TCP {}:{} -> {}:{} [{}]",
+                "TCP {}:{} -> {}:{} [{:?}]",
                 i.local_addr, i.local_port, i.remote_addr, i.remote_port, i.pid
             ),
             SocketInfo::UdpSocketInfo(i) => {
-                println!("UDP {}:{} -> *:* [{}]", i.local_addr, i.local_port, i.pid)
+                println!("UDP {}:{} -> *:* [{:?}]", i.local_addr, i.local_port, i.pid)
             }
         }
     }

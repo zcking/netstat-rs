@@ -67,19 +67,24 @@ unsafe fn parse_diag_msg(
     match protocol as i32 {
         IPPROTO_TCP => results.push(SocketInfo::TcpSocketInfo(TcpSocketInfo {
             local_addr: src_ip,
-            local_scope: Option::None,
             local_port: src_port,
             remote_addr: dst_ip,
-            remote_scope: Option::None,
             remote_port: dst_port,
             state: TcpState::MIB_TCP_STATE_LISTEN,
-            pid: 0,
+            pid: Option::None,
+            os_specific_info: OsSocketInfo::Linux(LinuxSocketInfo {
+                inode: diag_msg.inode,
+                pids: Vec::with_capacity(0),
+            }),
         })),
         IPPROTO_UDP => results.push(SocketInfo::UdpSocketInfo(UdpSocketInfo {
             local_addr: src_ip,
-            local_scope: Option::None,
             local_port: src_port,
-            pid: 0,
+            pid: Option::None,
+            os_specific_info: OsSocketInfo::Linux(LinuxSocketInfo {
+                inode: diag_msg.inode,
+                pids: Vec::with_capacity(0),
+            }),
         })),
         _ => panic!("Unknown protocol!"),
     }
