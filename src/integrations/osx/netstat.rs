@@ -50,7 +50,7 @@ pub fn get_netstat_info(
                     local_port: parse_port(local_port)?,
                     remote_addr: parse_ip(remote_addr, is_ipv4)?,
                     remote_port: parse_port(remote_port)?,
-                    state: TcpState::MIB_TCP_STATE_CLOSED,
+                    state: TcpState::from(parts[5]),
                 }),
                 pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
             });

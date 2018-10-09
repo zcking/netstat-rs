@@ -40,18 +40,20 @@ macro_rules! RTA_ALIGN {
 }
 
 macro_rules! RTA_OK {
-    ($rta:expr, $len:expr) => {
+    ($rta:expr, $len:expr) => {{
         let rtattr_size = std::mem::size_of::<rtattr>();
-        $len >= rtattr_size && (&*$rta).len >= rtattr_size && (&*$rta).len <= $len
-    };
+        $len >= rtattr_size as isize
+            && (&*$rta).rta_len >= rtattr_size as u16
+            && (&*$rta).rta_len <= $len as u16
+    }};
 }
 
 macro_rules! RTA_NEXT {
-    ($rta:expr, $len:expr) => {
-        let rta_len = (&*$rta).len;
+    ($rta:expr, $len:expr) => {{
+        let rta_len = (&*$rta).rta_len as isize;
         $len -= RTA_ALIGN!(rta_len);
         ($rta as *const u8).offset(RTA_ALIGN!(rta_len)) as *const rtattr
-    };
+    }};
 }
 
 macro_rules! RTA_LENGTH {
@@ -62,6 +64,6 @@ macro_rules! RTA_LENGTH {
 
 macro_rules! RTA_DATA {
     ($rta:expr) => {
-        ($rta as *const u8).offset(RTA_LENGTH!(0))
+        ($rta as *const u8).offset(RTA_LENGTH!(0) as isize)
     };
 }

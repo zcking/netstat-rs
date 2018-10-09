@@ -17,8 +17,8 @@ fn main() {
     for si in sockets_info {
         match si.protocol_socket_info {
             ProtocolSocketInfo::Tcp(pi) => println!(
-                "TCP {}:{} -> {}:{} [{:?}]",
-                pi.local_addr, pi.local_port, pi.remote_addr, pi.remote_port, si.pids
+                "TCP {}:{} -> {}:{} ({}) [{:?}]",
+                pi.local_addr, pi.local_port, pi.remote_addr, pi.remote_port, pi.state, si.pids
             ),
             ProtocolSocketInfo::Udp(i) => println!(
                 "UDP {}:{} -> *:* [{:?}]",

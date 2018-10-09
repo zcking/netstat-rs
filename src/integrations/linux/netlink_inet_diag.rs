@@ -35,56 +35,10 @@ pub unsafe fn collect_sockets_info(
                 });
             }
             let diag_msg = NLMSG_DATA!(nlh) as *const inet_diag_msg;
-            let rtalen = (&*nlh).nlmsg_len - NLMSG_LENGTH!(size_of::<inet_diag_msg>()) as __u32;
-            parse_diag_msg(&*diag_msg, protocol, rtalen as c_int, results);
+            let rtalen = (&*nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
+            parse_diag_msg(&*diag_msg, protocol, rtalen, results);
             nlh = NLMSG_NEXT!(nlh, numbytes);
         }
-    }
-}
-
-unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> IpAddr {
-    match family as i32 {
-        AF_INET => IpAddr::V4(Ipv4Addr::from(
-            *(&bytes[0] as *const __be32 as *const [u8; 4]),
-        )),
-        AF_INET6 => IpAddr::V6(Ipv6Addr::from(
-            *(bytes as *const [__be32; 4] as *const u8 as *const [u8; 16]),
-        )),
-        _ => panic!("Unknown family!"),
-    }
-}
-
-unsafe fn parse_diag_msg(
-    diag_msg: &inet_diag_msg,
-    protocol: __u8,
-    rtalen: c_int,
-    results: &mut Vec<SocketInfo>,
-) {
-    let src_port = u16::from_be(diag_msg.id.sport);
-    let dst_port = u16::from_be(diag_msg.id.dport);
-    let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
-    let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
-    match protocol as i32 {
-        IPPROTO_TCP => results.push(SocketInfo {
-            protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
-                local_addr: src_ip,
-                local_port: src_port,
-                remote_addr: dst_ip,
-                remote_port: dst_port,
-                state: TcpState::MIB_TCP_STATE_LISTEN,
-            }),
-            pids: Vec::with_capacity(0),
-            inode: diag_msg.inode,
-        }),
-        IPPROTO_UDP => results.push(SocketInfo {
-            protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
-                local_addr: src_ip,
-                local_port: src_port,
-            }),
-            pids: Vec::with_capacity(0),
-            inode: diag_msg.inode,
-        }),
-        _ => panic!("Unknown protocol!"),
     }
 }
 
@@ -134,6 +88,67 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
         }),
         _ => Result::Ok(()),
     }
+}
+
+unsafe fn parse_diag_msg(
+    diag_msg: &inet_diag_msg,
+    protocol: __u8,
+    rtalen: usize,
+    results: &mut Vec<SocketInfo>,
+) {
+    let src_port = u16::from_be(diag_msg.id.sport);
+    let dst_port = u16::from_be(diag_msg.id.dport);
+    let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
+    let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
+    match protocol as i32 {
+        IPPROTO_TCP => {
+            results.push(SocketInfo {
+                protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                    local_addr: src_ip,
+                    local_port: src_port,
+                    remote_addr: dst_ip,
+                    remote_port: dst_port,
+                    state: parse_tcp_state(diag_msg, rtalen),
+                }),
+                pids: Vec::with_capacity(0),
+                inode: diag_msg.inode,
+            });
+        }
+        IPPROTO_UDP => results.push(SocketInfo {
+            protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
+                local_addr: src_ip,
+                local_port: src_port,
+            }),
+            pids: Vec::with_capacity(0),
+            inode: diag_msg.inode,
+        }),
+        _ => panic!("Unknown protocol!"),
+    }
+}
+
+unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> IpAddr {
+    match family as i32 {
+        AF_INET => IpAddr::V4(Ipv4Addr::from(
+            *(&bytes[0] as *const __be32 as *const [u8; 4]),
+        )),
+        AF_INET6 => IpAddr::V6(Ipv6Addr::from(
+            *(bytes as *const [__be32; 4] as *const u8 as *const [u8; 16]),
+        )),
+        _ => panic!("Unknown family!"),
+    }
+}
+
+unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
+    let mut len = rtalen as isize;
+    let mut attr = (diag_msg as *const inet_diag_msg).offset(1) as *const rtattr;
+    while RTA_OK!(attr, len) {
+        if (&*attr).rta_type == INET_DIAG_INFO as u16 {
+            let tcpi = &*(RTA_DATA!(attr) as *const tcp_info);
+            return TcpState::from(tcpi.state);
+        }
+        attr = RTA_NEXT!(attr, len);
+    }
+    panic!("Tcp state not found!");
 }
 
 unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
