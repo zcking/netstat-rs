@@ -1,7 +1,15 @@
 [package]
 name = "netstat"
-version = "0.1.0"
+version = "0.6.0"
 authors = ["ivxvm <ivxvm@protonmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ivxvm/netstat-rs"
+homepage = "https://github.com/ivxvm/netstat-rs"
+documentation = "https://docs.rs/netstat"
+description = """
+Retrieve active network sockets information.
+"""
 
 [dependencies]
 libc = "0.2"
