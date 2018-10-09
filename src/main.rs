@@ -18,11 +18,12 @@ fn main() {
         match socket_info {
             SocketInfo::TcpSocketInfo(i) => println!(
                 "TCP {}:{} -> {}:{} [{:?}]",
-                i.local_addr, i.local_port, i.remote_addr, i.remote_port, i.pid
+                i.local_addr, i.local_port, i.remote_addr, i.remote_port, i.pids
             ),
-            SocketInfo::UdpSocketInfo(i) => {
-                println!("UDP {}:{} -> *:* [{:?}]", i.local_addr, i.local_port, i.pid)
-            }
+            SocketInfo::UdpSocketInfo(i) => println!(
+                "UDP {}:{} -> *:* [{:?}]",
+                i.local_addr, i.local_port, i.pids
+            ),
         }
     }
 }

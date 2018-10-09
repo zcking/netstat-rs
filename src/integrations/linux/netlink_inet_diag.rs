@@ -71,20 +71,14 @@ unsafe fn parse_diag_msg(
             remote_addr: dst_ip,
             remote_port: dst_port,
             state: TcpState::MIB_TCP_STATE_LISTEN,
-            pid: Option::None,
-            os_specific_info: OsSocketInfo::Linux(LinuxSocketInfo {
-                inode: diag_msg.inode,
-                pids: Vec::with_capacity(0),
-            }),
+            pids: Vec::with_capacity(0),
+            inode: diag_msg.inode,
         })),
         IPPROTO_UDP => results.push(SocketInfo::UdpSocketInfo(UdpSocketInfo {
             local_addr: src_ip,
             local_port: src_port,
-            pid: Option::None,
-            os_specific_info: OsSocketInfo::Linux(LinuxSocketInfo {
-                inode: diag_msg.inode,
-                pids: Vec::with_capacity(0),
-            }),
+            pids: Vec::with_capacity(0),
+            inode: diag_msg.inode,
         })),
         _ => panic!("Unknown protocol!"),
     }

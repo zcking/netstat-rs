@@ -39,20 +39,20 @@ fn attach_pids(sockets_info: &mut Vec<SocketInfo>) {
     for socket_info in sockets_info.iter_mut() {
         match socket_info {
             SocketInfo::TcpSocketInfo(tcpi) => {
-                let linux_socket_info = tcpi.os_specific_info.expect_linux_mut();
-                let pids = pids_by_inode
-                    .remove(&linux_socket_info.inode)
-                    .unwrap_or_default();
-                tcpi.pid = pids.iter().nth(0).cloned();
-                linux_socket_info.pids = pids.iter().map(|x| *x).collect();
+                tcpi.pids = pids_by_inode
+                    .remove(&tcpi.inode)
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|x| *x)
+                    .collect();
             }
             SocketInfo::UdpSocketInfo(udpi) => {
-                let linux_socket_info = udpi.os_specific_info.expect_linux_mut();
-                let pids = pids_by_inode
-                    .remove(&linux_socket_info.inode)
-                    .unwrap_or_default();
-                udpi.pid = pids.iter().nth(0).cloned();
-                linux_socket_info.pids = pids.iter().map(|x| *x).collect();
+                udpi.pids = pids_by_inode
+                    .remove(&udpi.inode)
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|x| *x)
+                    .collect();
             }
         }
     }

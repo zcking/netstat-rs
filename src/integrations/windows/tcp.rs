@@ -50,8 +50,7 @@ pub unsafe fn collect_tcp_sockets_info(
                         remote_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.remote_addr))),
                         remote_port: u16::from_be(row.remote_port as u16),
                         state: TcpState::from(row.state),
-                        pid: row.owning_pid,
-                        os_specific_info: OsSocketInfo::Windows,
+                        pids: vec![row.owning_pid],
                     }));
                 }
             }
@@ -69,8 +68,7 @@ pub unsafe fn collect_tcp_sockets_info(
                         // remote_scope: Option::Some(row.remote_scope_id),
                         remote_port: u16::from_be(row.remote_port as u16),
                         state: TcpState::from(row.state),
-                        pid: row.owning_pid,
-                        os_specific_info: OsSocketInfo::Windows,
+                        pids: vec![row.owning_pid],
                     }));
                 }
             }
