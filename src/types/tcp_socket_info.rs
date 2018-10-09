@@ -1,5 +1,5 @@
 use std::net::IpAddr;
-use types::TcpState;
+use types::{OsSocketInfo, TcpState};
 
 #[derive(Copy, Clone, Debug)]
 pub struct TcpSocketInfo {
@@ -9,4 +9,5 @@ pub struct TcpSocketInfo {
     pub remote_port: u16,
     pub state: TcpState,
     pub pid: u32,
+    pub os_specific_info: OsSocketInfo,
 }
