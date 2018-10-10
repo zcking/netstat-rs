@@ -7,8 +7,10 @@ readme = "README.md"
 repository = "https://github.com/ivxvm/netstat-rs"
 homepage = "https://github.com/ivxvm/netstat-rs"
 documentation = "https://docs.rs/netstat"
+categories = ["network-programming", "os"]
+keywords = ["network", "socket"]
 description = """
-Retrieve active network sockets information.
+Cross-platform library to retrieve network sockets information.
 """
 
 [dependencies]
