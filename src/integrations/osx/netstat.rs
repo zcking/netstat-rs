@@ -115,12 +115,14 @@ fn wrap_error<Err: Debug + 'static>(e: Err) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn split_endpoint_default() {
         let (ip, port) = split_endpoint("192.168.48.128.123");
         assert_eq!(ip, "192.168.48.128");
         assert_eq!(port, "123");
     }
+
     #[test]
     fn split_endpoint_asterisk() {
         let (ip, port) = split_endpoint("*");
