@@ -5,7 +5,8 @@ use types::tcp_state::TcpState;
 pub struct SocketInfo {
     pub protocol_socket_info: ProtocolSocketInfo,
     pub pids: Vec<u32>,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", feature = "dox"))]
+    #[doc(cfg(target_os = "linux"))]
     pub inode: u32,
 }
 
