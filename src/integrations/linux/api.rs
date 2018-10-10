@@ -4,15 +4,15 @@ use libc::*;
 use types::*;
 
 pub fn get_sockets_info(
-    address_family: AddressFamily,
-    protocol: Protocol,
+    af_flags: AddressFamilyFlags,
+    proto_flags: ProtocolFlags,
 ) -> Result<Vec<SocketInfo>, Error> {
     unsafe {
         let mut results = Vec::new();
-        let ipv4 = address_family.contains(AddressFamily::Ipv4);
-        let ipv6 = address_family.contains(AddressFamily::Ipv6);
-        let tcp = protocol.contains(Protocol::TCP);
-        let udp = protocol.contains(Protocol::UDP);
+        let ipv4 = af_flags.contains(AddressFamilyFlags::IPV4);
+        let ipv6 = af_flags.contains(AddressFamilyFlags::IPV6);
+        let tcp = proto_flags.contains(ProtocolFlags::TCP);
+        let udp = proto_flags.contains(ProtocolFlags::UDP);
         if ipv4 {
             if tcp {
                 collect_sockets_info(AF_INET as u8, IPPROTO_TCP as u8, &mut results)?;

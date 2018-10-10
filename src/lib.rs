@@ -1,4 +1,3 @@
-#![feature(doc_cfg)]
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
@@ -19,12 +18,12 @@ mod tests {
 
     #[test]
     fn get_sockets_info_result_is_ok() {
-        let af_flags_combs = (0..AddressFamily::all().bits() + 1)
-            .filter_map(|x| AddressFamily::from_bits(x))
-            .collect::<Vec<AddressFamily>>();
-        let proto_flags_combs = (0..Protocol::all().bits() + 1)
-            .filter_map(|x| Protocol::from_bits(x))
-            .collect::<Vec<Protocol>>();
+        let af_flags_combs = (0..AddressFamilyFlags::all().bits() + 1)
+            .filter_map(|x| AddressFamilyFlags::from_bits(x))
+            .collect::<Vec<AddressFamilyFlags>>();
+        let proto_flags_combs = (0..ProtocolFlags::all().bits() + 1)
+            .filter_map(|x| ProtocolFlags::from_bits(x))
+            .collect::<Vec<ProtocolFlags>>();
         for af_flags in af_flags_combs.iter() {
             for proto_flags in proto_flags_combs.iter() {
                 assert!(get_sockets_info(*af_flags, *proto_flags).is_ok());
@@ -34,7 +33,8 @@ mod tests {
 
     #[test]
     fn get_sockets_info_result_is_empty_for_empty_flags() {
-        let sockets_info = get_sockets_info(AddressFamily::empty(), Protocol::empty()).unwrap();
+        let sockets_info =
+            get_sockets_info(AddressFamilyFlags::empty(), ProtocolFlags::empty()).unwrap();
         assert!(sockets_info.len() == 0);
     }
 }

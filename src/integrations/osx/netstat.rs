@@ -6,8 +6,8 @@ use std::rc::Rc;
 use types::*;
 
 pub fn get_netstat_info(
-    address_family: AddressFamily,
-    protocol: Protocol,
+    af_flags: AddressFamilyFlags,
+    proto_flags: ProtocolFlags,
 ) -> Result<Vec<SocketInfo>, Error> {
     let mut results = Vec::new();
     let child = Command::new("netstat")
@@ -29,10 +29,10 @@ pub fn get_netstat_info(
         let is_udp = parts[0].starts_with("udp");
         let is_ipv4 = parts[0].ends_with("4");
         let is_ipv6 = !is_ipv4;
-        let skip = is_tcp && !protocol.contains(Protocol::TCP)
-            || is_udp && !protocol.contains(Protocol::UDP)
-            || is_ipv4 && !address_family.contains(AddressFamily::Ipv4)
-            || is_ipv6 && !address_family.contains(AddressFamily::Ipv6);
+        let skip = is_tcp && !proto_flags.contains(ProtocolFlags::TCP)
+            || is_udp && !proto_flags.contains(ProtocolFlags::UDP)
+            || is_ipv4 && !af_flags.contains(AddressFamilyFlags::IPV4)
+            || is_ipv6 && !af_flags.contains(AddressFamilyFlags::IPV6);
         if skip {
             continue;
         }

@@ -32,8 +32,8 @@ use netstat::*;
 
 fn main() {
     let sockets_info = get_sockets_info(
-        AddressFamily::Ipv4 | AddressFamily::Ipv6,
-        Protocol::TCP | Protocol::UDP,
+        AddressFamilyFlags::IPV4 | AddressFamilyFlags::IPV6,
+        ProtocolFlags::TCP | ProtocolFlags::UDP,
     ).unwrap();
     for si in sockets_info {
         match si.protocol_socket_info {
