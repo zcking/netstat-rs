@@ -6,8 +6,8 @@ use types::tcp_state::TcpState;
 pub struct SocketInfo {
     /// Protocol-specific socket information.
     pub protocol_socket_info: ProtocolSocketInfo,
-    /// Identifiers of processes referring to this socket.
-    pub pids: Vec<u32>,
+    /// Identifiers of processes associated with this socket.
+    pub associated_pids: Vec<u32>,
     #[cfg(any(target_os = "linux", feature = "dox"))]
     #[doc(cfg(target_os = "linux"))]
     pub inode: u32,

@@ -49,7 +49,7 @@ pub unsafe fn collect_udp_sockets_info(
                             local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
                             local_port: u16::from_be(row.local_port as u16),
                         }),
-                        pids: vec![row.owning_pid],
+                        associated_pids: vec![row.owning_pid],
                     });
                 }
             }
@@ -65,7 +65,7 @@ pub unsafe fn collect_udp_sockets_info(
                             // local_scope: Option::Some(row.local_scope_id),
                             local_port: u16::from_be(row.local_port as u16),
                         }),
-                        pids: vec![row.owning_pid],
+                        associated_pids: vec![row.owning_pid],
                     });
                 }
             }

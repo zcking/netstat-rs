@@ -52,7 +52,7 @@ pub fn get_netstat_info(
                     remote_port: parse_port(remote_port)?,
                     state: TcpState::from(parts[5]),
                 }),
-                pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+                associated_pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
             });
         } else if is_udp {
             results.push(SocketInfo {
@@ -60,7 +60,7 @@ pub fn get_netstat_info(
                     local_addr: parse_ip(local_addr, is_ipv4)?,
                     local_port: parse_port(local_port)?,
                 }),
-                pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+                associated_pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
             });
         }
     }

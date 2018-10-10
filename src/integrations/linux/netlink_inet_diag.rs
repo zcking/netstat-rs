@@ -110,7 +110,7 @@ unsafe fn parse_diag_msg(
                     remote_port: dst_port,
                     state: parse_tcp_state(diag_msg, rtalen),
                 }),
-                pids: Vec::with_capacity(0),
+                associated_pids: Vec::with_capacity(0),
                 inode: diag_msg.inode,
             });
         }
@@ -119,7 +119,7 @@ unsafe fn parse_diag_msg(
                 local_addr: src_ip,
                 local_port: src_port,
             }),
-            pids: Vec::with_capacity(0),
+            associated_pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
         }),
         _ => panic!("Unknown protocol!"),
