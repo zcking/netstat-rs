@@ -37,7 +37,7 @@ pub fn get_sockets_info(
 fn attach_pids(sockets_info: &mut Vec<SocketInfo>) {
     let mut pids_by_inode = build_hash_of_pids_by_inode();
     for socket_info in sockets_info.iter_mut() {
-        socket_info.pids = pids_by_inode
+        socket_info.associated_pids = pids_by_inode
             .remove(&socket_info.inode)
             .unwrap_or_default()
             .iter()
