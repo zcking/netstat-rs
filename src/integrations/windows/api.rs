@@ -3,6 +3,7 @@ use integrations::windows::tcp::*;
 use integrations::windows::udp::*;
 use types::*;
 
+/// Returns a vector of active sockets of specified address families and protocols.
 pub fn get_sockets_info(
     address_family: AddressFamily,
     protocol: Protocol,

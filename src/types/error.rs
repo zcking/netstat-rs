@@ -8,6 +8,7 @@ pub enum ErrorDetails {
     RustError(Rc<Box<Debug>>),
 }
 
+/// General error type.
 #[derive(Clone, Debug)]
 pub struct Error {
     pub method_name: &'static str,
