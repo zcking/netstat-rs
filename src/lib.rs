@@ -1,3 +1,7 @@
+//! Cross-platform library to retrieve network sockets information.
+//! Tries to be optimal by using low-level OS APIs instead of command line utilities.
+//! Provides unified interface and returns data structures which may have additional fields depending on platform.
+
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
