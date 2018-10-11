@@ -1,6 +1,6 @@
 [package]
 name = "netstat"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["ivxvm <ivxvm@protonmail.com>"]
 license = "MIT"
 readme = "README.md"
