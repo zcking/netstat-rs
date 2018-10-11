@@ -29,10 +29,9 @@ pub unsafe fn collect_sockets_info(
                 try_close(nl_sock);
                 // TODO: parse error code from msg properly
                 // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
-                return Result::Err(Error {
-                    method_name: "NLMSG_NEXT",
-                    error_details: ErrorDetails::ErrorWithCode(0),
-                });
+                return Result::Err(Error::InternalError(
+                    "Found netlink message with nlmsg_type == NLMSG_ERROR.",
+                ));
             }
             let diag_msg = NLMSG_DATA!(nlh) as *const inet_diag_msg;
             let rtalen = (&*nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
@@ -82,9 +81,9 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
         msg_flags: 0,
     };
     match sendmsg(sockfd, &msg, 0) {
-        -1 => Result::Err(Error {
-            method_name: "sendmsg",
-            error_details: get_os_error_details(),
+        -1 => Result::Err(Error::ForeignError {
+            api_name: "sendmsg",
+            err_code: get_raw_os_error(),
         }),
         _ => Result::Ok(()),
     }
@@ -153,9 +152,9 @@ unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
 
 unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
     match close(sockfd) {
-        -1 => Result::Err(Error {
-            method_name: "close",
-            error_details: get_os_error_details(),
+        -1 => Result::Err(Error::ForeignError {
+            api_name: "close",
+            err_code: get_raw_os_error(),
         }),
         _ => Result::Ok(()),
     }

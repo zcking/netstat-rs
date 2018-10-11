@@ -1,8 +1,6 @@
-use std::fmt::Debug;
 use std::io::{BufRead, BufReader};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::process::{Command, Stdio};
-use std::rc::Rc;
 use types::*;
 
 pub fn get_netstat_info(
@@ -52,7 +50,10 @@ pub fn get_netstat_info(
                     remote_port: parse_port(remote_port)?,
                     state: TcpState::from(parts[5]),
                 }),
-                associated_pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+                associated_pids: vec![
+                    pid.parse::<u32>()
+                        .map_err(|_| Error::InternalError("Failed parsing pid!"))?,
+                ],
             });
         } else if is_udp {
             results.push(SocketInfo {
@@ -60,7 +61,10 @@ pub fn get_netstat_info(
                     local_addr: parse_ip(local_addr, is_ipv4)?,
                     local_port: parse_port(local_port)?,
                 }),
-                associated_pids: vec![pid.parse::<u32>().map_err(wrap_error)?],
+                associated_pids: vec![
+                    pid.parse::<u32>()
+                        .map_err(|_| Error::InternalError("Failed parsing pid!"))?,
+                ],
             });
         }
     }
@@ -76,8 +80,16 @@ fn parse_ip(ip_str: &str, is_ipv4: bool) -> Result<IpAddr, Error> {
         })
     } else {
         Result::Ok(match is_ipv4 {
-            true => IpAddr::V4(ip_str.parse::<Ipv4Addr>().map_err(wrap_error)?),
-            false => IpAddr::V6(ip_str.parse::<Ipv6Addr>().map_err(wrap_error)?),
+            true => IpAddr::V4(
+                ip_str
+                    .parse::<Ipv4Addr>()
+                    .map_err(|_| Error::InternalError("Failed parsing Ipv4Addr!"))?,
+            ),
+            false => IpAddr::V6(
+                ip_str
+                    .parse::<Ipv6Addr>()
+                    .map_err(|_| Error::InternalError("Failed parsing Ipv6Addr!"))?,
+            ),
         })
     }
 }
@@ -85,7 +97,9 @@ fn parse_ip(ip_str: &str, is_ipv4: bool) -> Result<IpAddr, Error> {
 fn parse_port(port_str: &str) -> Result<u16, Error> {
     match port_str {
         "*" => Result::Ok(0),
-        _ => port_str.parse::<u16>().map_err(wrap_error),
+        _ => port_str
+            .parse::<u16>()
+            .map_err(|_| Error::InternalError("Failed parsing port!")),
     }
 }
 
@@ -103,13 +117,6 @@ fn split_endpoint(endpoint: &str) -> (&str, &str) {
 
 fn remove_zone_index(ip_str: &str) -> &str {
     ip_str.splitn(2, '%').nth(0).unwrap()
-}
-
-fn wrap_error<Err: Debug + 'static>(e: Err) -> Error {
-    Error {
-        method_name: "collect_netstat_info",
-        error_details: ErrorDetails::RustError(Rc::new(Box::new(e))),
-    }
 }
 
 #[cfg(test)]

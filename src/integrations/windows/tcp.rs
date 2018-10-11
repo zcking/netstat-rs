@@ -30,10 +30,9 @@ pub unsafe fn collect_tcp_sockets_info(
         );
         iterations += 1;
         if iterations > 100 {
-            return Result::Err(Error {
-                method_name: "GetExtendedTcpTable",
-                error_details: ErrorDetails::BufferInitializationError(iterations),
-            });
+            return Result::Err(Error::InternalError(
+                "Failed to allocate buffer for GetExtendedTcpTable!",
+            ));
         }
     }
     if err_code == NO_ERROR {
@@ -80,9 +79,9 @@ pub unsafe fn collect_tcp_sockets_info(
         }
         return Result::Ok(());
     } else {
-        return Result::Err(Error {
-            method_name: "GetExtendedTcpTable",
-            error_details: ErrorDetails::ErrorWithCode(err_code),
+        return Result::Err(Error::ForeignError {
+            api_name: "GetExtendedTcpTable",
+            err_code: err_code as i32,
         });
     }
 }
