@@ -9,16 +9,7 @@ Cross-platform library to retrieve network sockets information.
 Aims to be optimal by using low-level OS APIs instead of command line utilities.
 Provides unified interface and returns data structures which may have additional fields depending on platform.
 
-## Usage
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-netstat = "0.6"
-```
-
-Example program:
+## Example
 
 ```rust
 extern crate netstat;
@@ -51,7 +42,7 @@ fn main() {
 
 ## Details
 
-- On Windows, library uses [GetExtendedTcpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedtcptable)/[GetExtendedUdpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedudptable) (iphlpapi)
+- On Windows, library uses [GetExtendedTcpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedtcptable) & [GetExtendedUdpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedudptable) (iphlpapi)
 - On Linux, it uses [NETLINK_INET_DIAG](http://manpages.ubuntu.com/manpages/bionic/en/man7/sock_diag.7.html) protocol and performs pid lookup by traversing `procfs`
 - On OS X, it should ideally use `sysctls`, but currently just parses netstat output (proper impletemention is mostly done in unused modules under `src/integrations/osx` folder, it waits for contributors with mac to finish it)
 
