@@ -2,15 +2,7 @@ use integrations::windows::ffi::*;
 use integrations::windows::socket_table_iterator::SocketTableIterator;
 use types::*;
 
-/// Returns a vector of active sockets of specified address families and protocols.
-pub fn get_sockets_info(
-    af_flags: AddressFamilyFlags,
-    proto_flags: ProtocolFlags,
-) -> Result<Vec<SocketInfo>, Error> {
-    iterate_sockets_info(af_flags, proto_flags)?.collect()
-}
-
-/// Iterates through sockets information.
+/// Iterate through sockets information.
 pub fn iterate_sockets_info(
     af_flags: AddressFamilyFlags,
     proto_flags: ProtocolFlags,

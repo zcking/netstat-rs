@@ -9,34 +9,68 @@ use utils::*;
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
 
-pub unsafe fn collect_sockets_info(
-    family: __u8,
+pub struct NetlinkIterator {
     protocol: __u8,
-    results: &mut Vec<SocketInfo>,
-) -> Result<(), Error> {
-    let mut recv_buf = [0u8; SOCKET_BUFFER_SIZE as usize];
-    let nl_sock = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
-    send_diag_msg(nl_sock, family, protocol)?;
-    let buf_ptr = &mut recv_buf[0] as *mut u8 as *mut c_void;
-    loop {
-        let mut numbytes = recv(nl_sock, buf_ptr, SOCKET_BUFFER_SIZE, 0);
-        let mut nlh = buf_ptr as *const u8 as *const nlmsghdr;
-        while NLMSG_OK!(nlh, numbytes) {
-            if (&*nlh).nlmsg_type == NLMSG_DONE as u16 {
-                return try_close(nl_sock);
+    recv_buf: [u8; SOCKET_BUFFER_SIZE],
+    socket: i32,
+    nlh: *const nlmsghdr,
+    numbytes: isize,
+    nlmsg_ok: bool,
+}
+
+impl NetlinkIterator {
+    pub unsafe fn new(family: __u8, protocol: __u8) -> Result<Self, Error> {
+        let socket = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
+        send_diag_msg(socket, family, protocol)?;
+        Ok(NetlinkIterator {
+            protocol,
+            socket,
+            recv_buf: [0u8; SOCKET_BUFFER_SIZE as usize],
+            nlh: std::ptr::null(),
+            numbytes: 0,
+            nlmsg_ok: false,
+        })
+    }
+}
+
+impl Iterator for NetlinkIterator {
+    type Item = Result<SocketInfo, Error>;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            loop {
+                if !self.nlmsg_ok {
+                    let buf_ptr = &mut self.recv_buf[0] as *mut u8 as *mut c_void;
+                    self.numbytes = recv(self.socket, buf_ptr, SOCKET_BUFFER_SIZE, 0);
+                    self.nlh = buf_ptr as *const u8 as *const nlmsghdr;
+                }
+                self.nlmsg_ok = NLMSG_OK!(self.nlh, self.numbytes);
+                if self.nlmsg_ok {
+                    if (&*self.nlh).nlmsg_type == NLMSG_DONE as u16 {
+                        return None;
+                    }
+                    if (&*self.nlh).nlmsg_type == NLMSG_ERROR as u16 {
+                        // TODO: parse error code from msg properly
+                        // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
+                        return Some(Result::Err(Error::InternalError(
+                            "Found netlink message with nlmsg_type == NLMSG_ERROR.",
+                        )));
+                    }
+                    let diag_msg = NLMSG_DATA!(self.nlh) as *const inet_diag_msg;
+                    let rtalen =
+                        (&*self.nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
+                    let socket_info = parse_diag_msg(&*diag_msg, self.protocol, rtalen);
+                    self.nlh = NLMSG_NEXT!(self.nlh, self.numbytes);
+                    return Some(Ok(socket_info));
+                }
             }
-            if (&*nlh).nlmsg_type == NLMSG_ERROR as u16 {
-                try_close(nl_sock);
-                // TODO: parse error code from msg properly
-                // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
-                return Result::Err(Error::InternalError(
-                    "Found netlink message with nlmsg_type == NLMSG_ERROR.",
-                ));
-            }
-            let diag_msg = NLMSG_DATA!(nlh) as *const inet_diag_msg;
-            let rtalen = (&*nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
-            parse_diag_msg(&*diag_msg, protocol, rtalen, results);
-            nlh = NLMSG_NEXT!(nlh, numbytes);
+        }
+    }
+}
+
+impl Drop for NetlinkIterator {
+    fn drop(&mut self) {
+        unsafe {
+            try_close(self.socket);
         }
     }
 }
@@ -89,38 +123,31 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
     }
 }
 
-unsafe fn parse_diag_msg(
-    diag_msg: &inet_diag_msg,
-    protocol: __u8,
-    rtalen: usize,
-    results: &mut Vec<SocketInfo>,
-) {
+unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, protocol: __u8, rtalen: usize) -> SocketInfo {
     let src_port = u16::from_be(diag_msg.id.sport);
     let dst_port = u16::from_be(diag_msg.id.dport);
     let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
     let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
     match protocol as i32 {
-        IPPROTO_TCP => {
-            results.push(SocketInfo {
-                protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
-                    local_addr: src_ip,
-                    local_port: src_port,
-                    remote_addr: dst_ip,
-                    remote_port: dst_port,
-                    state: parse_tcp_state(diag_msg, rtalen),
-                }),
-                associated_pids: Vec::with_capacity(0),
-                inode: diag_msg.inode,
-            });
-        }
-        IPPROTO_UDP => results.push(SocketInfo {
+        IPPROTO_TCP => SocketInfo {
+            protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                local_addr: src_ip,
+                local_port: src_port,
+                remote_addr: dst_ip,
+                remote_port: dst_port,
+                state: parse_tcp_state(diag_msg, rtalen),
+            }),
+            associated_pids: Vec::with_capacity(0),
+            inode: diag_msg.inode,
+        },
+        IPPROTO_UDP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
                 local_addr: src_ip,
                 local_port: src_port,
             }),
             associated_pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
-        }),
+        },
         _ => panic!("Unknown protocol!"),
     }
 }
@@ -147,7 +174,7 @@ unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
         }
         attr = RTA_NEXT!(attr, len);
     }
-    panic!("Tcp state not found!");
+    TcpState::TimeWait
 }
 
 unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
