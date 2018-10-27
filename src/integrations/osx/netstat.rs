@@ -8,19 +8,25 @@ pub fn iterate_netstat_info(
     proto_flags: ProtocolFlags,
 ) -> Result<impl Iterator<Item = Result<SocketInfo, Error>>, Error> {
     let child = Command::new("netstat")
-        .arg("-nv")
+        .arg("-anv")
         .stdout(Stdio::piped())
         .spawn()
         .map_err(|_| Error::InternalError("Failed to run netstat utility!"))?;
     Ok(BufReader::new(child.stdout.unwrap())
         .lines()
-        .skip(2)
-        .filter_map(
-            move |ln| match parse_line(af_flags, proto_flags, &ln.ok()?) {
-                Err(Termination::Skip) => None,
-                r => Some(r),
-            },
-        ).take_while(|r| match r {
+        .filter_map(|ln| ln.ok())
+        .skip_while(|ln| {
+            let lower = ln.to_lowercase();
+            !lower.contains("proto")
+                || !lower.contains("recv")
+                || !lower.contains("send")
+                || !lower.contains("state")
+                || !lower.contains("pid")
+        }).skip(1)
+        .filter_map(move |ln| match parse_line(af_flags, proto_flags, &ln) {
+            Err(Termination::Skip) => None,
+            r => Some(r),
+        }).take_while(|r| match r {
             Err(Termination::Break) => false,
             _ => true,
         }).map(|r| r.map_err(|e| e.unwrap())))
@@ -73,10 +79,12 @@ fn parse_line(
     }
     let (local_addr, local_port) = split_endpoint(parts[3]);
     let (remote_addr, remote_port) = split_endpoint(parts[4]);
-    let pid = match parts.len() {
-        9 => parts[7],
-        10 => parts[8],
-        _ => panic!("Unknown netstat output format!"),
+    let pid = if is_tcp {
+        parts[8]
+    } else if is_udp {
+        parts[7]
+    } else {
+        panic!("Unknown netstat output format!");
     };
     if is_tcp {
         Ok(SocketInfo {
