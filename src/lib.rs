@@ -72,4 +72,15 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn every_socket_is_either_tcp_or_udp() {
+        let af_flags = AddressFamilyFlags::all();
+        let proto_flags = ProtocolFlags::all();
+        let sockets_info = iterate_sockets_info(af_flags, proto_flags)
+            .unwrap()
+            .map(|r| r.unwrap());
+        for socket_info in sockets_info {
+            assert!(socket_info.is_tcp() == !socket_info.is_udp());
+        }
+    }
 }

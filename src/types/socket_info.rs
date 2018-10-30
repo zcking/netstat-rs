@@ -12,6 +12,23 @@ pub struct SocketInfo {
     pub inode: u32,
 }
 
+impl SocketInfo {
+    /// Checks whether this socket info describes a TCP socket.
+    pub fn is_tcp(&self) -> bool {
+        match self.protocol_socket_info {
+            ProtocolSocketInfo::Tcp(_) => true,
+            _ => false,
+        }
+    }
+    /// Checks whether this socket info describes an UDP socket.
+    pub fn is_udp(&self) -> bool {
+        match self.protocol_socket_info {
+            ProtocolSocketInfo::Udp(_) => true,
+            _ => false,
+        }
+    }
+}
+
 /// Protocol-specific socket information.
 #[derive(Clone, Debug)]
 pub enum ProtocolSocketInfo {
