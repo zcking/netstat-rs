@@ -108,29 +108,22 @@ impl SocketTable for MIB_UDP6TABLE_OWNER_PID {
 
 fn get_extended_tcp_table(address_family: ULONG) -> Result<Vec<u8>, Error> {
     let mut table_size: DWORD = 0;
-    let mut err_code = unsafe {
-        GetExtendedTcpTable(
-            std::ptr::null_mut(),
-            &mut table_size,
-            FALSE,
-            address_family,
-            TCP_TABLE_OWNER_PID_ALL,
-            0,
-        )
-    };
+    let mut err_code = ERROR_INSUFFICIENT_BUFFER;
     let mut table = Vec::<u8>::new();
     let mut iterations = 0;
     while err_code == ERROR_INSUFFICIENT_BUFFER {
         table = Vec::<u8>::with_capacity(table_size as usize);
         err_code = unsafe {
-            GetExtendedTcpTable(
+            let ret = GetExtendedTcpTable(
                 table.as_mut_ptr() as PVOID,
                 &mut table_size,
                 FALSE,
                 address_family,
                 TCP_TABLE_OWNER_PID_ALL,
                 0,
-            )
+            );
+            table.set_len(table_size as usize);
+            ret
         };
         iterations += 1;
         if iterations > 100 {
@@ -151,29 +144,22 @@ fn get_extended_tcp_table(address_family: ULONG) -> Result<Vec<u8>, Error> {
 
 fn get_extended_udp_table(address_family: ULONG) -> Result<Vec<u8>, Error> {
     let mut table_size: DWORD = 0;
-    let mut err_code = unsafe {
-        GetExtendedUdpTable(
-            std::ptr::null_mut(),
-            &mut table_size,
-            FALSE,
-            address_family,
-            UDP_TABLE_OWNER_PID,
-            0,
-        )
-    };
+    let mut err_code = ERROR_INSUFFICIENT_BUFFER;
     let mut table = Vec::<u8>::new();
     let mut iterations = 0;
     while err_code == ERROR_INSUFFICIENT_BUFFER {
         table = Vec::<u8>::with_capacity(table_size as usize);
         err_code = unsafe {
-            GetExtendedUdpTable(
+            let ret = GetExtendedUdpTable(
                 table.as_mut_ptr() as PVOID,
                 &mut table_size,
                 FALSE,
                 address_family,
                 UDP_TABLE_OWNER_PID,
                 0,
-            )
+            );
+            table.set_len(table_size as usize);
+            ret
         };
         iterations += 1;
         if iterations > 100 {
